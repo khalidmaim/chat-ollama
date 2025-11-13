@@ -1,138 +1,730 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chat Ollama</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #121212;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatspecteur — Jeu d’enquête IA</title>
+    <style>
+        :root {
+            --fond-noir: #10141a;
+            --bleu-nuit: #181e2a;
+            --jaune-police: #ffe14b;
+            --jaune-glow: #ffe14b99;
+            --rouge-danger: #cf2736;
+            --blanc: #f8f9fb;
+            --gris: #242937;
+            --carte-glow: 0 0 12px 0 var(--jaune-glow);
+            --accent-glow: 0 0 10px 2px var(--jaune-glow);
+            --bordure-hover: 2px solid var(--jaune-police);
+            --ombre-card: 0 2px 10px 0 #0006;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: linear-gradient(145deg, var(--bleu-nuit) 0%, var(--fond-noir) 100%);
+            color: var(--blanc);
+            font-family: 'Segoe UI', 'Montserrat', Arial, sans-serif;
+            min-height: 100vh;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background: var(--gris);
+            border-bottom: 4px solid var(--jaune-police);
+            padding: 24px 0 12px 0;
+            text-align: center;
+            position: relative;
+        }
+        header .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            font-size: 2.5rem;
+            color: var(--jaune-police);
+            text-shadow: 0 3px 9px #000b;
+            margin-bottom: 8px;
+        }
+        header .logo .badge {
+            background: var(--rouge-danger);
+            color: var(--blanc);
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            box-shadow: var(--accent-glow);
+        }
+        header .subtitle {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 400;
+            color: #dedede;
+            text-shadow: 0 2px 8px #0008;
+        }
+        main {
+            flex: 1 1 auto;
+            display: flex;
+            gap: 18px;
+            padding: 30px 4vw 24px 4vw;
+            max-width: 1440px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        @media (max-width: 1100px) {
+            main {
+                flex-direction: column;
+                gap: 16px;
+                padding: 18px 2vw;
+            }
+        }
+        .suspects-section {
+            background: var(--gris);
+            border-radius: 18px;
+            box-shadow: var(--ombre-card);
+            padding: 18px 16px;
+            flex: 1 1 270px;
+            min-width: 270px;
+            max-width: 330px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: stretch;
+            border: 2px solid #222a36;
+        }
+        .suspects-title {
+            color: var(--jaune-police);
+            margin-bottom: 6px;
+            font-size: 1.3rem;
+            letter-spacing: 2px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .suspects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin: 0;
+            padding: 0;
+        }
+        .suspect-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: #222736;
+            border-radius: 10px;
+            padding: 11px 13px 11px 10px;
+            box-shadow: 0 1px 9px 0 #0005;
+            border-left: 5px solid transparent;
+            transition: border-left 0.2s, box-shadow 0.2s, transform 0.15s;
+            position: relative;
+            cursor: pointer;
+        }
+        .suspect-card:hover, .suspect-card.selected {
+            border-left: 5px solid var(--jaune-police);
+            box-shadow: 0 2px 12px 0 var(--jaune-glow);
+            transform: scale(1.035);
+        }
+        .suspect-card.selected {
+            outline: 2px solid var(--rouge-danger);
+            outline-offset: 2px;
+        }
+        .suspect-avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px #0008;
+            background: linear-gradient(135deg, var(--fond-noir) 40%, var(--jaune-police) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #222; /* Iconic accent */
+            outline: 2px solid var(--bleu-nuit);
+            outline-offset: 1px;
+            position: relative;
+        }
+        .suspect-main-badge {
+            position: absolute;
+            top: 2px; right: 2px;
+            background: var(--rouge-danger);
+            color: var(--blanc);
+            font-size: 0.92rem;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 5px;
+            box-shadow: 0 0 6px 1px var(--rouge-danger);
+        }
+        .suspect-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .suspect-name {
+            font-weight: 600;
+            font-size: 1.09rem;
+            color: var(--blanc);
+            margin-bottom: 2px;
+            text-transform: capitalize;
+        }
+        .suspect-desc {
+            font-size: 0.97rem;
+            color: #b9bbca;
+            margin-bottom: 3px;
+        }
+        .suspect-tags {
+            display: flex;
+            gap: 6px;
+        }
+        .suspect-tag {
+            background: var(--jaune-police);
+            color: #242437;
+            border-radius: 5px;
+            font-size: 0.91rem;
+            font-weight: 500;
+            padding: 1px 7px;
+            letter-spacing: 1px;
+        }
+        .suspect-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 2px;
+        }
+        .btn {
+            padding: 2px 12px;
+            border: none;
+            border-radius: 4px;
+            background: var(--jaune-police);
+            color: #191b23;
+            font-weight: 600;
+            font-size: 0.97rem;
+            cursor: pointer;
+            box-shadow: 0 2px 12px 0 #0001;
+            margin-right: 1px;
+            transition: background 0.15s, box-shadow 0.12s, transform 0.12s;
+        }
+        .btn:hover {
+            background: #fff46d;
+            box-shadow: 0 0 12px 0 var(--jaune-glow);
+            transform: scale(1.06);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--jaune-police);
+            border: 2px solid var(--jaune-police);
+            box-shadow: none;
+        }
+        .btn-outline:hover {
+            background: var(--jaune-police);
+            color: #181e2a;
+            box-shadow: var(--accent-glow);
+        }
+        .chat-section {
+            background: linear-gradient(135deg, #212532 80%, #181e2a 100%);
+            border-radius: 18px;
+            box-shadow: var(--ombre-card);
+            padding: 17px 16px 16px 16px;
+            flex: 2 1 430px;
+            min-width: 320px;
+            max-width: 680px;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 2px;
+            color: var(--jaune-police);
+            font-weight: 700;
+            font-size: 1.19rem;
+            letter-spacing: 1.2px;
+        }
+        .chat-info {
+            color: #cf2736;
+            font-size: 0.98rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .chat-history {
+            background: #171b24;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px #0002;
+            padding: 13px 10px;
+            min-height: 170px;
+            max-height: 216px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 11px;
+            margin-bottom: 10px;
+            border: 1.5px solid #262a3e;
+        }
+        .chat-bubble {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+        }
+        .bubble {
+            max-width: 75%;
+            padding: 8px 13px;
+            border-radius: 17px;
+            font-size: 1.01rem;
+            line-height: 1.34;
+            box-shadow: 0 1px 7px #0007;
+            position: relative;
+            display: inline-block;
+        }
+        .bubble-player {
+            background: linear-gradient(90deg, #2b2f3c 70%, #181e2a 100%);
+            color: #e4ecfd;
+            border-bottom-right-radius: 2px;
+            margin-left: auto;
+            align-self: flex-end;
+            border: 1.2px solid #475ab2;
+        }
+        .bubble-chatspecteur {
+            background: linear-gradient(90deg, var(--jaune-police) 10%, #ecdb6d 90%);
+            color: #242222;
+            font-weight: 600;
+            border-bottom-left-radius: 2px;
+            border: 1.2px solid #d2b900;
+            margin-right: auto;
+            align-self: flex-start;
+            box-shadow: var(--carte-glow);
+        }
+        .chat-from {
+            font-size: 0.93rem;
+            font-weight: 600;
+            color: #bbb;
+            opacity: 0.83;
+            margin-bottom: 2px;
+        }
+        .chat-input-zone {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 8px 15px;
+            border-radius: 7px;
+            border: none;
+            background: #222533;
+            color: var(--blanc);
+            font-size: 1.09rem;
+            box-shadow: 0 1px 8px #0002;
+            outline: 2px solid transparent;
+            transition: outline 0.15s;
+        }
+        .chat-input:focus {
+            outline: 2px solid var(--jaune-police);
+        }
+        .chat-send-btn {
+            background: var(--jaune-police);
+            color: #131626;
+            border: none;
+            border-radius: 7px;
+            font-weight: bold;
+            font-size: 1.12rem;
+            box-shadow: 0 2px 10px #0002;
+            padding: 0 22px;
+            cursor: pointer;
+            transition: background 0.12s, box-shadow 0.12s;
+        }
+        .chat-send-btn:hover {
+            background: #fff46d;
+            box-shadow: 0 0 8px var(--jaune-glow);
+        }
+        aside.indices-section {
+            background: var(--gris);
+            border-radius: 18px;
+            box-shadow: var(--ombre-card);
+            padding: 18px 14px;
+            flex: 1 1 265px;
+            min-width: 230px;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            position: relative;
+            border: 2px solid #222a36;
+        }
+        .indices-title {
+            color: var(--jaune-police);
+            font-size: 1.13rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1.7px;
+            margin-bottom: 1px;
+        }
+        .indices-list {
+            padding-left: 14px;
+            margin-bottom: 8px;
+        }
+        .indice {
+            font-size: 0.98rem;
+            margin-bottom: 6px;
+            color: #f4f6e4;
+        }
+        .progress-zone {
+            margin: 7px 0 9px 0;
+        }
+        .progress-label {
+            font-size: 0.98rem;
+            margin-bottom: 2px;
+            color: #f1c51d;
+            font-weight: 600;
+            letter-spacing: 1.1px;
+        }
+        .enquete-progress {
+            background: #181e2a;
+            border-radius: 7px;
+            overflow: hidden;
+            width: 100%;
+            height: 16px;
+            margin-bottom: 2px;
+            box-shadow: 0 1px 8px #0003;
+            border: 1px solid #31344a;
+        }
+        .enquete-progress-bar {
+            background: linear-gradient(90deg, var(--jaune-police), #f6e889);
+            height: 100%;
+            width: 45%;
+            max-width: 100%;
+            border-radius: 7px 0 0 7px;
+            box-shadow: var(--carte-glow);
+            transition: width 0.3s;
+        }
+        .btn-accuser {
+            width: 100%;
+            padding: 7px 0;
+            margin-top: 7px;
+            margin-bottom: 4px;
+            background: linear-gradient(90deg, var(--jaune-police) 80%, #fdc900 100%);
+            color: #10121f;
+            font-weight: 900;
+            font-size: 1.08rem;
+            border-radius: 9px;
+            border: none;
+            cursor: pointer;
+            box-shadow: var(--accent-glow);
+            letter-spacing: 1.2px;
+            border: 2.5px solid #d0aa1d;
+            transition: box-shadow 0.15s, color 0.15s, background 0.15s;
+        }
+        .btn-accuser:hover {
+            color: var(--rouge-danger);
+            box-shadow: 0 0 18px 0 var(--rouge-danger);
+            background: var(--jaune-police);
+            border: 2.5px solid var(--rouge-danger);
+        }
 
-    header {
-      background-color: #1e88e5;
-      padding: 15px 25px;
-      font-size: 20px;
-      font-weight: bold;
-      text-align: center;
-    }
+        footer {
+            background: #191a20;
+            color: #bbb;
+            text-align: center;
+            font-size: 1.01rem;
+            padding: 13px 0 8px 0;
+            letter-spacing: 0.6px;
+            border-top: 4px solid var(--jaune-police);
+        }
 
-    #chat-box {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .message {
-      padding: 10px 15px;
-      border-radius: 10px;
-      max-width: 75%;
-      word-wrap: break-word;
-    }
-
-    .user {
-      align-self: flex-end;
-      background-color: #1e88e5;
-    }
-
-    .bot {
-      align-self: flex-start;
-      background-color: #2c2c2c;
-    }
-
-    #input-area {
-      display: flex;
-      padding: 10px;
-      border-top: 1px solid #333;
-      background-color: #1a1a1a;
-    }
-
-    #user-input {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      outline: none;
-      background-color: #2c2c2c;
-      color: white;
-    }
-
-    button {
-      background-color: #1e88e5;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      padding: 10px 15px;
-      margin-left: 8px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    button:hover {
-      background-color: #1565c0;
-    }
-  </style>
+        /* Responsive */
+        @media (max-width: 880px) {
+            main {
+                flex-direction: column;
+                padding: 10px 1vw 7px 1vw;
+            }
+            .suspects-section, .chat-section, .indices-section {
+                max-width: 100%;
+                min-width: 0;
+            }
+        }
+        @media (max-width: 500px) {
+            header .logo {
+                font-size: 1.5rem;
+            }
+            .chat-section, .suspects-section, .indices-section {
+                padding: 11px 6px;
+                border-radius: 10px;
+            }
+            .chat-history {
+                min-height: 90px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>🤖 Chat Ollama</header>
+    <header>
+        <div class="logo">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="vertical-align:middle">
+                <ellipse cx="16" cy="19" rx="13" ry="11" fill="#ffe14b" stroke="#242A36" stroke-width="3"/>
+                <ellipse cx="16" cy="13" rx="6" ry="4" fill="#242A36"/>
+                <circle cx="12.7" cy="12.5" r="1.3" fill="#fff"/>
+                <circle cx="19.3" cy="12.5" r="1.3" fill="#fff"/>
+                <path d="M12 23 Q16 26, 20 23" stroke="#cf2736" stroke-width="2" fill="none"/>
+            </svg>
+            Chatspecteur
+            <span class="badge">IA</span>
+        </div>
+        <div class="subtitle">Jeu d’enquête interactif : devine le coupable en dialoguant avec le criminel.</div>
+    </header>
+    <main>
+        <section class="suspects-section">
+            <div class="suspects-title">Suspects</div>
+            <div class="suspects-list" id="suspects-list">
+                <div class="suspect-card selected" data-index="0">
+                    <div class="suspect-avatar">👨‍💼
+                        <span class="suspect-main-badge" style="display: block;">Principal</span>
+                    </div>
+                    <div class="suspect-details">
+                        <div class="suspect-name">Paul Martin</div>
+                        <div class="suspect-desc">Employé modèle, toujours présent lors des réunions, mais évite les conversations personnelles.</div>
+                        <div class="suspect-tags">
+                            <span class="suspect-tag">Nerveux</span>
+                            <span class="suspect-tag">Alibi douteux</span>
+                        </div>
+                        <div class="suspect-actions">
+                            <button class="btn btn-outline interroger-btn">Interroger</button>
+                            <button class="btn principal-btn" style="display:none;">Marquer comme principal</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="suspect-card" data-index="1">
+                    <div class="suspect-avatar">👩‍🦰</div>
+                    <div class="suspect-details">
+                        <div class="suspect-name">Sophie Dubois</div>
+                        <div class="suspect-desc">Très bavarde, grande amie de la victime, s’oppose à toute forme de violence.</div>
+                        <div class="suspect-tags">
+                            <span class="suspect-tag">Calme</span>
+                            <span class="suspect-tag">Alibi solide</span>
+                        </div>
+                        <div class="suspect-actions">
+                            <button class="btn btn-outline interroger-btn">Interroger</button>
+                            <button class="btn principal-btn">Marquer comme principal</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="suspect-card" data-index="2">
+                    <div class="suspect-avatar">🧑‍🎤</div>
+                    <div class="suspect-details">
+                        <div class="suspect-name">Julien Leroy</div>
+                        <div class="suspect-desc">Artiste discret, n’a jamais réellement sympathisé avec le groupe, souvent solitaire.</div>
+                        <div class="suspect-tags">
+                            <span class="suspect-tag">Discret</span>
+                            <span class="suspect-tag">Menteur</span>
+                        </div>
+                        <div class="suspect-actions">
+                            <button class="btn btn-outline interroger-btn">Interroger</button>
+                            <button class="btn principal-btn">Marquer comme principal</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="suspect-card" data-index="3">
+                    <div class="suspect-avatar">👴</div>
+                    <div class="suspect-details">
+                        <div class="suspect-name">Henri Lefèvre</div>
+                        <div class="suspect-desc">Retraité, voisin de la scène de crime, souvent observé en train d’espionner les autres.</div>
+                        <div class="suspect-tags">
+                            <span class="suspect-tag">Curieux</span>
+                            <span class="suspect-tag">Alibi douteux</span>
+                        </div>
+                        <div class="suspect-actions">
+                            <button class="btn btn-outline interroger-btn">Interroger</button>
+                            <button class="btn principal-btn">Marquer comme principal</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-  <div id="chat-box"></div>
+        <section class="chat-section">
+            <div class="chat-header">
+                <svg width="22" height="22" viewBox="0 0 22 22" style="vertical-align:middle">
+                    <ellipse cx="11" cy="11" rx="9" ry="8" fill="#ffe14b" stroke="#222A36" stroke-width="1.6"/>
+                    <ellipse cx="11" cy="8.7" rx="3.1" ry="2" fill="#242A36"/>
+                </svg>
+                Chat avec le criminel
+            </div>
+            <div class="chat-info">Vous discutez avec le criminel, tentez de piéger le coupable !</div>
+            <div class="chat-history" id="chat-history">
+                <div>
+                    <div class="chat-from">Vous (exemple)</div>
+                    <div class="chat-bubble">
+                        <div class="bubble bubble-player">Où étiez-vous la nuit du crime ?</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="chat-from">Chatspecteur (exemple IA)</div>
+                    <div class="chat-bubble">
+                        <div class="bubble bubble-chatspecteur">
+                            Je me trouvais chez moi, seul. Mais personne ne peut confirmer mon alibi.
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="chat-from">Vous (exemple)</div>
+                    <div class="chat-bubble">
+                        <div class="bubble bubble-player">Pourquoi avez-vous menti lors de votre première déposition ?</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="chat-from">Chatspecteur (exemple IA)</div>
+                    <div class="chat-bubble">
+                        <div class="bubble bubble-chatspecteur">
+                            J’étais stressé et je ne voulais pas être accusé à tort. Maintenant, je dis la vérité.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form class="chat-input-zone" id="chat-form" autocomplete="off">
+                <input type="text" class="chat-input" id="chat-input" placeholder="Écrivez votre question…" maxlength="350" autocomplete="off" required>
+                <button type="submit" class="chat-send-btn">Envoyer</button>
+            </form>
+        </section>
 
-  <div id="input-area">
-    <input type="text" id="user-input" placeholder="Écris ton message..." onkeydown="handleKey(event)" />
-    <button onclick="sendMessage()">Envoyer</button>
-  </div>
+        <aside class="indices-section">
+            <div class="indices-title">Pistes & Indices</div>
+            <div class="indices-list" id="indices-list">
+                <div class="indice">Empreinte digitale sur la lampe.</div>
+                <div class="indice">Criminel gaucher détecté.</div>
+                <div class="indice">Aucune trace d’effraction.</div>
+            </div>
+            <div class="progress-zone">
+                <div class="progress-label">Progression de l’enquête :</div>
+                <div class="enquete-progress">
+                    <div class="enquete-progress-bar" id="enquete-progress-bar"></div>
+                </div>
+            </div>
+            <button class="btn-accuser">Accuser un suspect</button>
+        </aside>
+    </main>
+    <footer>
+        Interface IA <b>Chatspecteur</b> — Développé pour un backend Python/Ollama.
+        <br><span style="color:#ffe14b">⚡</span> <i>L’IA du criminel est déjà en place côté serveur.</i>
+    </footer>
+    <script>
+        // --- Gestion du chat simulé ---
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatHistory = document.getElementById('chat-history');
+        const chatSamplesNb = 4; // Nombre de messages de démonstration à conserver en haut
 
-  <script>
-    const API_URL = "http://127.0.0.1:8000/api/chat";
-    const chatBox = document.getElementById("chat-box");
-    const userInput = document.getElementById("user-input");
-    let messages = [];
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message = chatInput.value.trim();
+            if (!message) return;
+            addPlayerMessage(message);
+            chatInput.value = '';
 
-    function handleKey(event) {
-      if (event.key === "Enter") sendMessage();
-    }
-
-    async function sendMessage() {
-      const text = userInput.value.trim();
-      if (!text) return;
-
-      addMessage("user", text);
-      userInput.value = "";
-
-      try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages })
+            setTimeout(() => {
+                addChatspecteurMessage(fakeChatspecteurAnswer(message));
+            }, 850);
         });
 
-        const data = await response.json();
-        addMessage("bot", data.reply || "⚠️ Aucune réponse reçue.");
-      } catch (error) {
-        addMessage("bot", "❌ Erreur de connexion au serveur FastAPI.");
-      }
-    }
+        function addPlayerMessage(msg) {
+            // Ajout message joueur
+            const msgBlock = document.createElement('div');
+            msgBlock.innerHTML =
+                '<div class="chat-from">Vous</div>' +
+                '<div class="chat-bubble"><div class="bubble bubble-player"></div></div>';
+            msgBlock.querySelector('.bubble').textContent = msg;
+            chatHistory.appendChild(msgBlock);
 
-    function addMessage(role, content) {
-      const div = document.createElement("div");
-      div.classList.add("message", role);
-      div.textContent = content;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
-      messages.push({ role, content });
-    }
-  </script>
+            // TODO: envoyer le message à l’IA Chatspecteur via l’API backend Python/Ollama
+
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        function addChatspecteurMessage(msg) {
+            const msgBlock = document.createElement('div');
+            msgBlock.innerHTML =
+                '<div class="chat-from">Chatspecteur</div>' +
+                '<div class="chat-bubble"><div class="bubble bubble-chatspecteur"></div></div>';
+            msgBlock.querySelector('.bubble').textContent = msg;
+            chatHistory.appendChild(msgBlock);
+
+            // TODO: afficher la réponse réelle de l’IA reçue via le backend
+
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        // Réponse simulée (à remplacer par la vraie réponse du backend)
+        function fakeChatspecteurAnswer(question) {
+            const samples = [
+                "Intéressant… Pourquoi penses-tu que je suis le tueur ?",
+                "Je n’ai rien à cacher. Pose-moi tes questions.",
+                "Parle-moi de ce que tu sais sur les autres suspects.",
+                "Pourquoi suspectes-tu Henri ?",
+                "Je crois que tu te trompes de piste.",
+                "Ce n’est pas moi, mais quelqu’un essaie de me piéger.",
+                "Pourquoi insister autant ?",
+                "Je ne fais confiance à personne, même à toi.",
+                "Je refuse de répondre sans mon avocat.", 
+            ];
+            // Simple random response for the fake
+            return samples[Math.floor(Math.random() * samples.length)];
+        }
+
+        // --- Gestion de la sélection du suspect principal ---
+        const suspectCards = document.querySelectorAll('.suspect-card');
+        suspectCards.forEach(card => {
+            card.addEventListener('click', () => {
+                suspectCards.forEach(c => {
+                    c.classList.remove('selected');
+                    c.querySelector('.suspect-main-badge')?.style.setProperty('display', 'none');
+                });
+                card.classList.add('selected');
+                const badge = card.querySelector('.suspect-main-badge');
+                if (badge) badge.style.display = 'block';
+                else {
+                    const avatar = card.querySelector('.suspect-avatar');
+                    const newBadge = document.createElement('span');
+                    newBadge.className = 'suspect-main-badge';
+                    newBadge.textContent = 'Principal';
+                    avatar.appendChild(newBadge);
+                }
+            });
+        });
+
+        // --- Gestion des boutons Interroger ---
+        document.querySelectorAll('.interroger-btn').forEach((btn, idx) => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                // TODO: Afficher dans le chat une question "système" ciblée à ce suspect (ou ouvrir une modale, etc.)
+                addPlayerMessage("J’aimerais interroger " + suspectCards[idx].querySelector('.suspect-name').textContent + ".");
+                setTimeout(() => {
+                    addChatspecteurMessage("Voici ce que je peux te dire sur " + suspectCards[idx].querySelector('.suspect-name').textContent + "…");
+                }, 750);
+            });
+        });
+
+        // --- Gestion des boutons Marquer comme principal (pour accessibilité) ---
+        document.querySelectorAll('.principal-btn').forEach((btn, idx) => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                suspectCards[idx].click();
+            });
+        });
+
+        // --- Gestion de la barre de progression simulée ---
+        const progressBar = document.getElementById('enquete-progress-bar');
+        let progress = 45; // % - à adapter dynamiquement
+        // TODO: Mettre à jour cette valeur en fonction de la vraie progression de l’enquête
+
+        // --- Gestion du bouton Accuser ---
+        document.querySelector('.btn-accuser').addEventListener('click', function() {
+            // TODO: Traitement d’accusation du suspect principal via backend Python/Ollama
+            alert('Action d’accusation simulée.\nÀ brancher avec votre API backend.');
+        });
+    </script>
 </body>
 </html>
